@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "eb582d5cf672427dcd33c1bdecd5984b"
-application_url = "https://national-suppose-knowledge-wells.trycloudflare.com"
+application_url = "https://bills-philadelphia-permitted-dictionary.trycloudflare.com"
 embedded = true
 name = "Easy Promos"
 handle = "learning-app-130"
@@ -19,9 +19,9 @@ scopes = "write_discounts, read_discounts, read_products, write_products, read_p
 
 [auth]
 redirect_urls = [
-  "https://national-suppose-knowledge-wells.trycloudflare.com/auth/callback",
-  "https://national-suppose-knowledge-wells.trycloudflare.com/auth/shopify/callback",
-  "https://national-suppose-knowledge-wells.trycloudflare.com/api/auth/callback"
+  "https://bills-philadelphia-permitted-dictionary.trycloudflare.com/auth/callback",
+  "https://bills-philadelphia-permitted-dictionary.trycloudflare.com/auth/shopify/callback",
+  "https://bills-philadelphia-permitted-dictionary.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

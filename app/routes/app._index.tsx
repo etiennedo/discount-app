@@ -12,7 +12,7 @@ import {
   Link,
   InlineStack,
 } from "@shopify/polaris";
-import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { PrismaClient } from '@prisma/client';
 import { useLoaderData, useNavigate } from "@remix-run/react";
@@ -203,11 +203,6 @@ const shopResponse = await admin.graphql(
 export default function Index() {
   const fetcher = useFetcher<typeof action>();
   const { discountCodes: initialCodes, page, totalCodes, pageSize } = useLoaderData<typeof loader>();
-  const [discountCodes, setDiscountCodes] = useState(initialCodes);
-
-  useEffect(() => {
-    setDiscountCodes(initialCodes);
-  }, [initialCodes]);
 
   const shopify = useAppBridge();
   const isLoading =
@@ -218,58 +213,6 @@ export default function Index() {
     "gid://shopify/DiscountCodeNode/",
     "",
   );
-
-  const hasNext = page * pageSize < totalCodes;
-  const hasPrevious = page > 1;
-
-  const handleSort = (columnIndex: number, sortDirection: "ascending" | "descending") => {
-    const sortedData = [...discountCodes].sort((a, b) => {
-      let aValue, bValue;
-
-      // Determine the field to sort by based on the column index.
-      if (columnIndex === 0) {
-        // Shopify ID
-        aValue = a.shopifyId;
-        bValue = b.shopifyId;
-      } else if (columnIndex === 1) {
-        // Discount Code
-        aValue = a.code;
-        bValue = b.code;
-      } else if (columnIndex === 2) {
-        // Created At (convert to Date for proper sorting)
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
-      }
-
-      // Compare values (works for strings and Date objects)
-      if (aValue > bValue) return sortDirection === "ascending" ? 1 : -1;
-      if (aValue < bValue) return sortDirection === "ascending" ? -1 : 1;
-      return 0;
-    });
-
-    setDiscountCodes(sortedData);
-  };
-
-  const rows = discountCodes.map((dc: any) => [
-    <Link
-      url={`shopify:admin/discounts/${dc.shopifyId}`}
-      target="_blank"
-      key={dc.shopifyId}
-    >
-      {dc.shopifyId}
-    </Link>,
-    dc.code,
-    new Date(dc.createdAt).toLocaleString(),
-  ]);
-
-  const navigate = useNavigate();
-  const handleNext = () => {
-    navigate(`?page=${page + 1}`);
-  };
-  
-  const handlePrevious = () => {
-    navigate(`?page=${page - 1}`);
-  };
 
   useEffect(() => {
     if (discountCode) {
@@ -289,23 +232,6 @@ export default function Index() {
         <Layout>
           <Layout.Section>
               <BlockStack gap="500">
-              <Card padding='0'>
-                <DataTable
-                    columnContentTypes={["text", "text", "text"]}
-                    headings={["Shopify ID", "Discount Code", "Created At"]}
-                    rows={rows}
-                    pagination={{
-                      hasNext,
-                      hasPrevious,
-                      onNext: handleNext,
-                      onPrevious: handlePrevious,
-                    }}
-                    sortable={[true, true, true]}
-                    defaultSortDirection="descending"
-                    initialSortColumnIndex={2}
-                    onSort={handleSort}
-                  />
-                </Card>
                 <Card>
                   <BlockStack gap="500">
                     <BlockStack gap="200">
