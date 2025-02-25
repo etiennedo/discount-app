@@ -1,0 +1,75 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String    @id @default(cuid())
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model Store {
+  id            Int            @id @default(autoincrement())
+  shopifyId     String         @unique
+  name          String?
+  email         String?
+  domain        String?
+  url           String?
+  discountCodes DiscountCode[]
+  Promotion     Promotion[]
+  products      Product[]
+}
+
+model Promotion {
+  id             Int           @id @default(autoincrement())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  discountCodeId Int?
+  storeId        Int
+  products       Product[]     @relation("ProductPromotions")
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  store          Store         @relation(fields: [storeId], references: [id])
+}
+
+model Product {
+  id               Int         @id @default(autoincrement())
+  price            Float
+  shopifyId        String      @unique
+  basePrice        Float
+  promotionalPrice Float
+  hasSellingPlan   Boolean     @default(false)
+  promotions       Promotion[] @relation("ProductPromotions")
+  storeId          Int
+  store            Store       @relation(fields: [storeId], references: [id])
+  discountCodes    DiscountCode[] @relation("ProductDiscountCodes")
+}
+
+model DiscountCode {
+  id         Int         @id @default(autoincrement())
+  shopifyId  String // The discount code ID from Shopify
+  code       String // The unique discount code string (if needed)
+  createdAt  DateTime    @default(now())
+  storeId    Int
+  store      Store       @relation(fields: [storeId], references: [id])
+  promotions Promotion[]
+  products   Product[]   @relation("ProductDiscountCodes")
+}
