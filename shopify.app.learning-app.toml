@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "eb582d5cf672427dcd33c1bdecd5984b"
-application_url = "https://module-dans-assistant-suspension.trycloudflare.com"
+application_url = "https://burst-dont-attend-cut.trycloudflare.com"
 embedded = true
 name = "Easy Promos"
 handle = "learning-app-130"
@@ -19,9 +19,9 @@ scopes = "write_discounts, read_discounts, read_products, write_products, read_p
 
 [auth]
 redirect_urls = [
-  "https://module-dans-assistant-suspension.trycloudflare.com/auth/callback",
-  "https://module-dans-assistant-suspension.trycloudflare.com/auth/shopify/callback",
-  "https://module-dans-assistant-suspension.trycloudflare.com/api/auth/callback"
+  "https://burst-dont-attend-cut.trycloudflare.com/auth/callback",
+  "https://burst-dont-attend-cut.trycloudflare.com/auth/shopify/callback",
+  "https://burst-dont-attend-cut.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

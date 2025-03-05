@@ -25,7 +25,11 @@ interface YearMonth {
 }
 
 // This example is for guidance purposes. Copying it will come with caveats.
-export default function DateRangePicker() {
+export default function DateRangePicker({
+  onDateChange,
+}: {
+  onDateChange?: (dateRange: { since: Date; until: Date }) => void;
+}) {
   const { mdDown, lgUp } = useBreakpoints();
   const shouldShowMultiMonth = lgUp;
   const today = new Date(new Date().setHours(0, 0, 0, 0));
@@ -219,7 +223,13 @@ export default function DateRangePicker() {
         });
       }
     }
-  }, [activeDateRange]);
+    if (onDateChange) {
+      onDateChange({
+        since: activeDateRange.period.since,
+        until: activeDateRange.period.until,
+      });
+    }
+  }, [activeDateRange, onDateChange]);
   const buttonValue =
     activeDateRange.title === "Custom"
       ? activeDateRange.period.since.toDateString() +

@@ -20,20 +20,65 @@ import PromoIndexTable from "../components/PromoIndexTable";
 const prisma = new PrismaClient();
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+
+  // Get the shop domain from the session
+  const shopDomain = session.shop;
+
+  // Fetch shop info via the Admin API
+  const shopData = await admin.graphql(`
+    {
+      shop {
+        id
+        name
+        email
+        myshopifyDomain
+        primaryDomain {
+          url
+        }
+      }
+    }
+  `);
+
+  const {
+    data: { shop },
+  } = await shopData.json();
+
+  const shopifyId = shop.id;
+  const shopName = shop.name;
+  const shopEmail = shop.email;
+  const shopDomainFromApi = shop.myshopifyDomain;
+  const shopUrl = shop.primaryDomain.url;
+
+  let store = await prisma.store.findUnique({
+    where: { shopifyId },
+  });
+
+  if (!store) {
+    store = await prisma.store.create({
+      data: {
+        shopifyId,
+        name: shopName,
+        email: shopEmail,
+        domain: shopDomainFromApi,
+        url: shopUrl,
+      },
+    });
+  }
 
   const promotions = await prisma.promotion.findMany({
+    where: { storeId: store.id },
     include: {
       store: true,
       discountCode: true,
     },
   });
 
-  return Response.json({ promotions });
+  return Response.json({ promotions, storeId: store.id });
 };
 
 export default function Index() {
-  const { promotions } = useLoaderData<typeof loader>();
+  const { promotions, storeId } = useLoaderData<typeof loader>();
 
   return (
     <Page
