@@ -22,9 +22,6 @@ const prisma = new PrismaClient();
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
 
-  // Get the shop domain from the session
-  const shopDomain = session.shop;
-
   // Fetch shop info via the Admin API
   const shopData = await admin.graphql(`
     {
@@ -70,7 +67,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { storeId: store.id },
     include: {
       store: true,
-      discountCode: true,
     },
   });
 

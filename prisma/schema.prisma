@@ -27,49 +27,66 @@ model Session {
 }
 
 model Store {
-  id            Int            @id @default(autoincrement())
-  shopifyId     String         @unique
-  name          String?
-  email         String?
-  domain        String?
-  url           String?
-  discountCodes DiscountCode[]
-  Promotion     Promotion[]
-  products      Product[]
-}
-
-model Promotion {
-  id             Int           @id @default(autoincrement())
-  name           String
-  startDate      DateTime
-  endDate        DateTime
-  discountCodeId Int?
-  storeId        Int
-  products       Product[]     @relation("ProductPromotions")
-  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
-  store          Store         @relation(fields: [storeId], references: [id])
+  id          Int         @id @default(autoincrement())
+  shopifyId   String      @unique
+  name        String
+  email       String
+  domain      String
+  url         String
+  promotions  Promotion[]
+  products    Product[]
 }
 
 model Product {
-  id               Int         @id @default(autoincrement())
-  price            Float
-  shopifyId        String      @unique
-  basePrice        Float
-  promotionalPrice Float
-  hasSellingPlan   Boolean     @default(false)
-  promotions       Promotion[] @relation("ProductPromotions")
-  storeId          Int
-  store            Store       @relation(fields: [storeId], references: [id])
-  discountCodes    DiscountCode[] @relation("ProductDiscountCodes")
+  id                  Int               @id @default(autoincrement())
+  title               String
+  shopifyId           String            @unique
+  price               Float
+  basePrice           Float
+  promotionalPrice    Float
+  hasSellingPlan      Boolean @default(false)
+  storeId             Int
+  store               Store       @relation(fields: [storeId], references: [id])
+  variants            ProductVariant[]
+  promotions          PromotionProduct[]
 }
 
-model DiscountCode {
-  id         Int         @id @default(autoincrement())
-  shopifyId  String // The discount code ID from Shopify
-  code       String // The unique discount code string (if needed)
-  createdAt  DateTime    @default(now())
-  storeId    Int
-  store      Store       @relation(fields: [storeId], references: [id])
-  promotions Promotion[]
-  products   Product[]   @relation("ProductDiscountCodes")
+model ProductVariant {
+  id         Int      @id @default(autoincrement())
+  shopifyId  String   @unique
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  price      Float
+}
+
+model Promotion {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  startDate           DateTime
+  endDate             DateTime
+  storeId             Int
+  store               Store               @relation(fields: [storeId], references: [id])
+  promotionProducts   PromotionProduct[]
+  discountCodes       PromotionDiscountCode[]
+}
+
+model PromotionProduct {
+  id                  Int        @id @default(autoincrement())
+  promotionId         Int
+  productId           Int
+  variantId           Int?
+  originalPrice       Float
+  promotionalPrice    Float
+  hasConflict         Boolean    @default(false) // Indique si déjà en rabais ailleurs
+  promotion           Promotion  @relation(fields: [promotionId], references: [id])
+  product             Product    @relation(fields: [productId], references: [id])
+}
+
+model PromotionDiscountCode {
+  id            Int       @id @default(autoincrement())
+  promotionId   Int
+  code          String
+  discountValue Float
+  createdAt     DateTime  @default(now())
+  promotion     Promotion @relation(fields: [promotionId], references: [id])
 }

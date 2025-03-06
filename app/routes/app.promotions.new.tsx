@@ -43,12 +43,20 @@ export async function action({ request }: ActionFunctionArgs) {
   const endDate = formData.get("endDate");
   const selectedProductsRaw = formData.get("selectedProducts");
 
-  if ( !name || !startDate || !endDate || !selectedProductsRaw ) {
+  if (!name || !startDate || !endDate || !selectedProductsRaw) {
     return Response.json({ error: "Missing required fields." }, { status: 400 });
   }
 
+  let selectedProducts: SelectedProduct[];
   try {
-    await prisma.promotion.create({
+    selectedProducts = JSON.parse(String(selectedProductsRaw));
+  } catch (e) {
+    return Response.json({ error: "Invalid selected products data." }, { status: 400 });
+  }
+
+  try {
+    // Créez d'abord la promotion
+    const promotion = await prisma.promotion.create({
       data: {
         name: String(name),
         startDate: new Date(startDate.toString()),
@@ -56,6 +64,60 @@ export async function action({ request }: ActionFunctionArgs) {
         storeId: store.id,
       },
     });
+
+    // Pour chaque produit sélectionné
+    for (const selectedProduct of selectedProducts) {
+      // Recherche du produit dans la base grâce à shopifyId
+      let product = await prisma.product.findUnique({
+        where: { shopifyId: selectedProduct.id },
+      });
+
+      // S'il n'existe pas, on le crée
+      if (!product) {
+        // Attention : il faut disposer des infos nécessaires (ex: titre, prix, etc.).
+        // Vous pouvez récupérer ces infos via l'API Shopify ou les inclure dans le formulaire.
+        product = await prisma.product.create({
+          data: {
+            title: "Titre par défaut", // Remplacez par le titre réel
+            shopifyId: selectedProduct.id,
+            price: 100, // Valeur par défaut ou issue de Shopify
+            basePrice: 100,
+            promotionalPrice: 100,
+            storeId: store.id,
+          },
+        });
+      }
+
+      // Pour chaque variante du produit sélectionné
+      for (const variant of selectedProduct.variants) {
+        let productVariant = await prisma.productVariant.findUnique({
+          where: { shopifyId: variant.id },
+        });
+
+        // S'il n'existe pas, on la crée
+        if (!productVariant) {
+          // Là encore, vous devez disposer des informations réelles de la variante
+          productVariant = await prisma.productVariant.create({
+            data: {
+              shopifyId: variant.id,
+              productId: product.id,
+              price: 100, // Remplacer par la valeur réelle de la variante
+            },
+          });
+        }
+
+        // Créer l'association dans PromotionProduct
+        await prisma.promotionProduct.create({
+          data: {
+            promotionId: promotion.id,
+            productId: product.id,
+            variantId: productVariant.id,
+            originalPrice: productVariant.price,
+            promotionalPrice: productVariant.price * 0.9, // Exemple de réduction de 10%
+          },
+        });
+      }
+    }
 
     return redirect("/app");
   } catch (error) {
