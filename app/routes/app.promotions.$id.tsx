@@ -1,4 +1,4 @@
-import { Page, Badge, Card, Layout, TextField, BlockStack, Button, Text } from '@shopify/polaris';
+import { Page, Badge, Card, Layout, TextField, BlockStack, Button } from '@shopify/polaris';
 import { useState, useCallback } from 'react';
 import { Form, useActionData } from "@remix-run/react";
 import DatePicker from '../components/DateRangePicker';
@@ -151,7 +151,6 @@ export default function NewPromotion() {
     const selected = await shopify.resourcePicker({
       type: 'product',
       multiple: true,
-      action: 'select',
       selectionIds: selectedProducts.map((product) => ({
         id: product.id,
         variants: product.variants.map((variant) => ({
@@ -160,26 +159,19 @@ export default function NewPromotion() {
       })),
     });
     if (selected) {
-      const products = (selected).map((resource) => ({
-        shopifyId: resource.id,
-        title: resource.title,
+      const products = (selected as SelectedProduct[]).map((resource) => ({
+        id: resource.id,
         variants: resource.variants.map((variant) => ({
-          shopifyId: variant.id,
-          title: variant.title,
-          basePrice: variant.price,
-          promotionalPrice: variant.compareAtPrice,
-
+          id: variant.id,
         })),
       }));
       setSelectedProducts(products);
-      console.log(selected);
+      console.log(products);
     } else {
       setSelectedProducts([]);
       console.log('No products selected');
     }
   };
-
-  const resourcePickerLabel = selectedProducts.length ? `${selectedProducts.length} products selected` : 'Select products';
 
   return (
     <Page
@@ -226,37 +218,25 @@ export default function NewPromotion() {
                 </BlockStack>
               </Card>
               <Card>
-                <Button onClick={openResourcePicker}>{resourcePickerLabel}</Button>
+                <Button onClick={openResourcePicker}>Sélectionner des produits</Button>
                 <input
                   type="hidden"
                   name="selectedProducts"
                   value={JSON.stringify(
-                    selectedProducts)}
+                    selectedProducts.map((product) => ({
+                      id: product.id,
+                      variants: product.variants.map((variant) => ({
+                        id: variant.id,
+                      })),
+                    }))
+                  )}
                 />
               </Card>
             </BlockStack>
           </Layout.Section>
           <Layout.Section variant="oneThird">
             <Card>
-            <BlockStack gap="400">
-              <Text variant="headingXl" as="h2">{name || "Promo name"}</Text>
-                <Text variant="bodyMd" as="p">
-                  <strong>Start date:</strong> {startDate.toDateString()}
-                  <br></br>
-                  <strong>End date:</strong> {endDate.toDateString()}
-                </Text>
-                <Text variant="headingXl" as="h23">Selected products</Text>
-                <Text variant="bodyMd" as="p">
-                    {selectedProducts.map((product) => (
-                      <>
-                        <p>{product.title}</p>
-                          {product.variants.map((variant) => (
-                              <p>{variant.id}</p>
-                          ))}
-                      </>
-                    ))}
-                </Text>
-            </BlockStack>
+              <p>Add tags to your order.</p>
             </Card>
           </Layout.Section>
         </Layout>

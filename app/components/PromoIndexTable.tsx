@@ -1,11 +1,13 @@
 import {
   EmptyState,
   IndexTable,
-  Card,
+  Badge,
   Text,
+  useIndexResourceState,
   useBreakpoints,
+  Link,
 } from "@shopify/polaris";
-import React from "react";
+import {DeleteIcon} from '@shopify/polaris-icons';
 
 interface PromoIndexTableProps {
   promotions: {
@@ -17,11 +19,50 @@ interface PromoIndexTableProps {
   }[];
 }
 
+function formatDate(dateString: string) {
+  return new Intl.DateTimeFormat('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  }).format(new Date(dateString));
+}
+
+function getStatusBadge(startDate: string, endDate: string) {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (now < start) {
+    return <Badge progress="incomplete" tone="attention">Scheduled</Badge>;
+  } else if (now >= start && now <= end) {
+    return <Badge progress="partiallyComplete" tone="success">Ongoing</Badge>;
+  } else {
+    return <Badge progress="complete">Completed</Badge>;
+  }
+}
+
 export default function PromoIndexTable({ promotions }: PromoIndexTableProps) {
   const resourceName = {
     singular: "promotion",
     plural: "promotions",
   };
+
+  const stringifiedPromotions = promotions.map((promotion) => ({
+    ...promotion,
+    id: promotion.id.toString(),
+  }));
+
+  const bulkActions = [
+    {
+      icon: DeleteIcon,
+      destructive: true,
+      content: 'Delete orders',
+      onAction: () => console.log('Todo: implement bulk delete'),
+    },
+  ];
+  
+  const {selectedResources, allResourcesSelected, handleSelectionChange} =
+    useIndexResourceState(stringifiedPromotions);
 
   const emptyStateMarkup = (
     <EmptyState
@@ -37,17 +78,28 @@ export default function PromoIndexTable({ promotions }: PromoIndexTableProps) {
     </EmptyState>
   );
 
-  const rowMarkup = promotions.map(
-    ({ id, name, startDate, endDate, storeId }, index) => (
-      <IndexTable.Row id={String(id)} key={id} position={index}>
+  const rowMarkup = stringifiedPromotions.map(
+    ({ id, name, startDate, endDate }, index) => (
+      <IndexTable.Row 
+      id={id}
+      key={id} 
+      selected={selectedResources.includes(id)}
+      position={index}
+      >
         <IndexTable.Cell>
-          <Text fontWeight="bold" as="span">
-            {name}
-          </Text>
+        <Link
+            dataPrimaryLink
+            url={`/app/promotions/${id}`}
+            onClick={() => console.log(`Clicked ${name}`)}
+          >
+            <Text fontWeight="bold" as="span">
+              {name}
+            </Text>
+          </Link>
         </IndexTable.Cell>
-        <IndexTable.Cell>{startDate}</IndexTable.Cell>
-        <IndexTable.Cell>{endDate}</IndexTable.Cell>
-        <IndexTable.Cell>{storeId}</IndexTable.Cell>
+        <IndexTable.Cell>{getStatusBadge(startDate, endDate)}</IndexTable.Cell>
+        <IndexTable.Cell>{formatDate(startDate)}</IndexTable.Cell>
+        <IndexTable.Cell>{formatDate(endDate)}</IndexTable.Cell>
       </IndexTable.Row>
     )
   );
@@ -59,11 +111,16 @@ export default function PromoIndexTable({ promotions }: PromoIndexTableProps) {
       itemCount={promotions.length}
       emptyState={emptyStateMarkup}
       headings={[
-        { title: "Name" },
+        { title: "Promotion name" },
+        { title: "Status" },
         { title: "Start Date" },
         { title: "End Date" },
-        { title: "Store ID" },
       ]}
+      selectedItemsCount={
+        allResourcesSelected ? 'All' : selectedResources.length
+      }
+      onSelectionChange={handleSelectionChange}
+      bulkActions={bulkActions}
     >
       {rowMarkup}
     </IndexTable>
